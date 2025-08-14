@@ -49,6 +49,9 @@ func main() {
 	topN := flag.Int("top", 5, "How many hosts to show per interval")
 	flag.Parse()
 
+	// Remove timestamps from default logger output
+	log.SetFlags(0)
+
 	log.Printf("fast-ok-server starting on %s (GOMAXPROCS=%d)", *addr, runtime.GOMAXPROCS(0))
 
 	h := func(ctx *fasthttp.RequestCtx) {
@@ -160,7 +163,7 @@ func main() {
 			}
 
 			uptime := time.Since(startTime).Truncate(time.Second)
-			log.Printf("fast-ok-server total stats: req/s ~ %d | bytes/s ~ %d | avg req %.1f B | totals: %d req, %d B | methods: GET=%d POST=%d OTHER=%d | uptime=%s",
+			log.Printf("total stats: req/s ~ %d | bytes/s ~ %d | avg req %.1f B | totals: %d req, %d B | methods: GET=%d POST=%d OTHER=%d | uptime=%s",
 				dr/uint64(interval.Seconds()),
 				db/uint64(interval.Seconds()),
 				avg,
@@ -172,7 +175,7 @@ func main() {
 
 			if len(items) > 0 {
 				for _, it := range items {
-					log.Printf("fast-ok-server host stats: %-40s | req/s ~ %d | avg %.1f B | interval: %d req, %d B",
+					log.Printf("host stats: %-40s | req/s ~ %d | avg %.1f B | interval: %d req, %d B",
 						it.host,
 						it.req/uint64(interval.Seconds()),
 						it.avg,
@@ -191,19 +194,19 @@ func main() {
 
 	ln, err := net.Listen("tcp4", *addr)
 	if err != nil {
-		log.Fatalf("fast-ok-server listen error: %v", err)
+		log.Fatalf("listen error: %v", err)
 	}
 
 	go func() {
 		if err := server.Serve(ln); err != nil {
-			log.Fatalf("fast-ok-server server error: %v", err)
+			log.Fatalf("server error: %v", err)
 		}
 	}()
 
 	<-stop
 	log.Println("shutting down...")
 	if err := server.Shutdown(); err != nil {
-		log.Printf("fast-ok-server shutdown error: %v", err)
+		log.Printf("shutdown error: %v", err)
 	}
 
 	currReq := atomic.LoadUint64(&totalRequests)
@@ -212,7 +215,7 @@ func main() {
 	if currReq > 0 {
 		avg = float64(currBytes) / float64(currReq)
 	}
-	fmt.Printf("fast-ok-server final totals: %d requests, %d bytes, avg size %.1f bytes, uptime=%s\n",
+	fmt.Printf("final totals: %d requests, %d bytes, avg size %.1f bytes, uptime=%s\n",
 		currReq,
 		currBytes,
 		avg,
