@@ -43,8 +43,8 @@ var (
 func main() {
 	addr := flag.String("addr", ":8080", "TCP address to listen on")
 	statsEvery := flag.Duration("stats", 2*time.Second, "How often to print stats")
-	readTimeout := flag.Duration("read-timeout", 5*time.Second, "Read timeout")
-	writeTimeout := flag.Duration("write-timeout", 5*time.Second, "Write timeout")
+	readTimeout := flag.Duration("read-timeout", 1*time.Second, "Read timeout")
+	writeTimeout := flag.Duration("write-timeout", 1*time.Second, "Write timeout")
 	idleTimeout := flag.Duration("idle-timeout", 30*time.Second, "Idle timeout")
 	topN := flag.Int("top", 5, "How many hosts to show per interval")
 	flag.Parse()
@@ -160,7 +160,7 @@ func main() {
 			}
 
 			uptime := time.Since(startTime).Truncate(time.Second)
-			log.Printf("stats: req/s ~ %d | bytes/s ~ %d | avg req %.1f B | totals: %d req, %d B | methods: GET=%d POST=%d OTHER=%d | uptime=%s",
+			log.Printf("fast-ok-server total stats: req/s ~ %d | bytes/s ~ %d | avg req %.1f B | totals: %d req, %d B | methods: GET=%d POST=%d OTHER=%d | uptime=%s",
 				dr/uint64(interval.Seconds()),
 				db/uint64(interval.Seconds()),
 				avg,
@@ -172,7 +172,7 @@ func main() {
 
 			if len(items) > 0 {
 				for _, it := range items {
-					log.Printf("  host: %-40s | req/s ~ %d | avg %.1f B | interval: %d req, %d B",
+					log.Printf("fast-ok-server host stats: %-40s | req/s ~ %d | avg %.1f B | interval: %d req, %d B",
 						it.host,
 						it.req/uint64(interval.Seconds()),
 						it.avg,
@@ -191,19 +191,19 @@ func main() {
 
 	ln, err := net.Listen("tcp4", *addr)
 	if err != nil {
-		log.Fatalf("listen error: %v", err)
+		log.Fatalf("fast-ok-server listen error: %v", err)
 	}
 
 	go func() {
 		if err := server.Serve(ln); err != nil {
-			log.Fatalf("server error: %v", err)
+			log.Fatalf("fast-ok-server server error: %v", err)
 		}
 	}()
 
 	<-stop
 	log.Println("shutting down...")
 	if err := server.Shutdown(); err != nil {
-		log.Printf("shutdown error: %v", err)
+		log.Printf("fast-ok-server shutdown error: %v", err)
 	}
 
 	currReq := atomic.LoadUint64(&totalRequests)
@@ -212,7 +212,7 @@ func main() {
 	if currReq > 0 {
 		avg = float64(currBytes) / float64(currReq)
 	}
-	fmt.Printf("final totals: %d requests, %d bytes, avg size %.1f bytes, uptime=%s\n",
+	fmt.Printf("fast-ok-server final totals: %d requests, %d bytes, avg size %.1f bytes, uptime=%s\n",
 		currReq,
 		currBytes,
 		avg,
