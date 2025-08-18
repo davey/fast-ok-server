@@ -55,7 +55,9 @@ func main() {
 	log.Printf("fast-ok-server starting on %s (GOMAXPROCS=%d)", *addr, runtime.GOMAXPROCS(0))
 
 	h := func(ctx *fasthttp.RequestCtx) {
-		host := strings.ToLower(string(ctx.Host()))
+		//host := strings.ToLower(string(ctx.Host()))
+		host := strings.ToLower(string(ctx.Request.Header.Host()))
+
 		if host == "" {
 			host = "(no-host)"
 		}
